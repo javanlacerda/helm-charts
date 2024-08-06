@@ -5,9 +5,177 @@ namespace:
 imagePullSecrets: []
 
 config:
-  contents: {}
-  format: json
-
+  format: yaml
+  contents:
+    define:
+      - &github-type "github-workflow"
+      - &gitlab-type "gitlab-pipeline"
+      - &codefresh-type "codefresh-workflow"
+      - &buildkite-type "buildkite-job"
+    oidc-issuers:
+      https://accounts.google.com:
+        issuer-url: https://accounts.google.com
+        client-id: sigstore
+        type: email
+        contact: tac@sigstore.dev
+        description: "Google OIDC auth"
+      https://agent.buildkite.com:
+        issuer-url: https://agent.buildkite.com
+        client-id: sigstore
+        type: ci-provider
+        ci-provider: *buildkite-type
+        contact: support@buildkite.com
+        description: "Buildkite Agent OIDC tokens for job identity"
+      https://allow.pub:
+        issuer-url: https://allow.pub
+        client-id: sigstore
+        type: spiffe
+        spiffe-trust-domain: allow.pub
+        contact: evan@phx.io
+        description: "Server side signing support for the OCI registry vcr.pub"
+      https://auth.eclipse.org/auth/realms/sigstore:
+        issuer-url: https://auth.eclipse.org/auth/realms/sigstore
+        client-id: sigstore
+        type: email
+        contact: security@eclipse-foundation.org
+        description: "Eclipse Foundation Production OIDC provider"
+      https://dev.gitlab.org:
+        issuer-url: https://dev.gitlab.org
+        client-id: sigstore
+        type: ci-provider
+        ci-provider: *gitlab-type
+        contact: distribution-be@gitlab.com
+        description: "GitLab OIDC tokens for job identity"
+      https://gitlab.archlinux.org:
+        issuer-url: https://gitlab.archlinux.org
+        client-id: sigstore
+        type: ci-provider
+        ci-provider: *gitlab-type
+        contact: sigstore@archlinux.org
+        description: "GitLab OIDC tokens for job identity"
+      https://gitlab.com:
+        issuer-url: https://gitlab.com
+        client-id: sigstore
+        type: ci-provider
+        ci-provider: *gitlab-type
+        contact: support@gitlab.com
+        description: "GitLab OIDC tokens for job identity"
+      https://issuer.enforce.dev:
+        issuer-url: https://issuer.enforce.dev
+        client-id: sigstore
+        type: chainguard-identity
+        contact: mattmoor@chainguard.dev
+        description: "Chainguard identity tokens"
+      https://issuer.hello.coop:
+        issuer-url: https://issuer.hello.coop
+        client-id: sigstore
+        type: email
+        contact: contact@hello.coop
+        description: "Hellō OIDC auth"
+      https://oauth2.sigstore.dev/auth:
+        issuer-url: https://oauth2.sigstore.dev/auth
+        client-id: sigstore
+        type: email
+        issuer-claim: $.federated_claims.connector_id
+        contact: tac@sigstore.dev
+        description: "dex address for fulcio"
+      https://oidc.codefresh.io:
+        issuer-url: https://oidc.codefresh.io
+        client-id: sigstore
+        type: ci-provider
+        ci-provider: *codefresh-type
+        contact: support@codefresh.io
+        description: "Codefresh OIDC tokens for job identity"
+      https://ops.gitlab.net:
+        issuer-url: https://ops.gitlab.net
+        client-id: sigstore
+        type: ci-provider
+        ci-provider: *gitlab-type
+        contact: distribution-be@gitlab.com
+        description: "GitLab OIDC tokens for job identity"
+      https://token.actions.githubusercontent.com:
+        issuer-url: https://token.actions.githubusercontent.com
+        client-id: sigstore
+        type: ci-provider
+        ci-provider: *github-type
+        contact: tac@sigstore.dev
+        description: "GitHub Actions OIDC auth"
+    meta-issuers:
+      https://*.oic.prod-aks.azure.com/*:
+        client-id: sigstore
+        type: kubernetes
+      https://container.googleapis.com/v1/projects/*/locations/*/clusters/*:
+        client-id: sigstore
+        type: kubernetes
+      https://oidc.eks.*.amazonaws.com/id/*:
+        client-id: sigstore
+        type: kubernetes
+      https://oidc.prod-aks.azure.com/*:
+        client-id: sigstore
+        type: kubernetes
+      https://token.actions.githubusercontent.com/*:
+        client-id: sigstore
+        type: ci-provider
+        ci-provider: *github-type
+    ci-issuer-metadata:
+      *github-type:
+        default-template-values:
+          url: "https://github.com"
+        extension-templates:
+          github-workflow-trigger: "event_name"
+          github-workflow-sha: "sha"
+          github-workflow-name: "workflow"
+          github-workflow-repository: "repository"
+          github-workflow-ref: "ref"
+          build-signer-uri: "{{ .url }}/{{ .job_workflow_ref }}"
+          build-signer-digest: "job_workflow_sha"
+          runner-environment: "runner_environment"
+          source-repository-uri: "{{ .url }}/{{ .repository }}"
+          source-repository-digest: "sha"
+          source-repository-ref: "ref"
+          source-repository-identifier: "repository_id"
+          source-repository-owner-uri: "{{ .url }}/{{ .repository_owner }}"
+          source-repository-owner-identifier: "repository_owner_id"
+          build-config-uri: "{{ .url }}/{{ .workflow_ref }}"
+          build-config-digest: "workflow_sha"
+          build-trigger: "event_name"
+          run-invocation-uri: "{{ .url }}/{{ .repository }}/actions/runs/{{ .run_id }}/attempts/{{ .run_attempt }}"
+          source-repository-visibility-at-signing: "repository_visibility"
+        subject-alternative-name-template: "{{ .url }}/{{ .job_workflow_ref }}"
+      *gitlab-type:
+        default-template-values:
+          url: "https://gitlab.com"
+        extension-templates:
+          build-signer-uri: "https://{{ .ci_config_ref_uri }}"
+          build-signer-digest: "ci_config_sha"
+          runner-environment: "runner_environment"
+          source-repository-uri: "{{ .url }}/{{ .repository }}"
+          source-repository-digest: "sha"
+          source-repository-ref: refs/{{if eq .ref_type "branch"}}heads/{{ else }}tags/{{end}}/{{ .ref }}
+          source-repository-identifier: "project_id"
+          source-repository-owner-uri: "{{ .url }}/{{ .namespace_path }}"
+          source-repository-owner-identifier: "namespace_id"
+          build-config-uri: "https://{{ .ci_config_ref_uri }}"
+          build-config-digest: "ci_config_sha"
+          build-trigger: "pipeline_source"
+          run-invocation-uri: "{{ .url }}/{{ .project_path }}/-/jobs/{{ .job_id }}"
+          source-repository-visibility-at-signing: "project_visibility"
+        subject-alternative-name-template: "https://{{ .ci_config_ref_uri }}"
+      *codefresh-type:
+        default-template-values:
+          platform_url: "https://g.codefresh.io"
+        extension-templates:
+          build-signer-uri: "{{.platform_url}}/build/{{ .workflow_id }}"
+          runner-environment: "runner_environment"
+          source-repository-uri: "scm_repo_url"
+          source-repository-ref: "scm_ref"
+          build-config-uri: "{{.platform_url}}/api/pipelines/{{ .pipeline_id }}"
+          run-invocation-uri: "{{.platform_url}}/build/{{ .workflow_id }}"
+        subject-alternative-name-template: "{{.platform_url}}/{{.account_name}}/{{.pipeline_name}}:{{.account_id}}/{{.pipeline_id}}"
+      *buildkite-type:
+        default-template-values:
+          url: "https://buildkite.com"
+        subject-alternative-name-template: "{{.url}}/{{.organization_slug}}/{{.pipeline_slug}}"
 server:
   replicaCount: 1
   name: server
