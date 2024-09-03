@@ -1,0 +1,41 @@
+name: Nightly Release
+
+# on:
+#   schedule:
+#     - cron: "0 1 * * *"  # Runs at 1 AM every day
+
+on:
+  workflow_dispatch:
+
+concurrency: nightly-release
+
+jobs:
+  nightly-update:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+      
+      - name: Setup crane
+        uses: imjasonh/setup-crane@v0.1
+      
+      - name: Retrieve version
+        run: |
+          echo "FULCIO_NIGHTLY_IMAGE_TAG=$(crane digest gcr.io/projectsigstore/fulcio:nightly-latest)" 
+        id: tag
+      
+      - name: Update Helm Chart Values
+        uses: fjogeleit/yaml-update-action@main
+        with:
+          valueFile: 'charts/fulcio/values.yaml'
+          propertyPath: 'values.server.image.version'
+          value: ${{ steps.tag.outputs.FULCIO_NIGHTLY_IMAGE_TAG }}
+          commitChange: true
