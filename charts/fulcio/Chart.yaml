@@ -5,23 +5,23 @@ description: |
 
 type: application
 
-version: 2.5.3
+version: 2.5.4
 appVersion: 1.6.2
 
 keywords:
-  - security
-  - pki
+- security
+- pki
 
 home: https://sigstore.dev/
 
 maintainers:
-  - name: The Sigstore Authors
+- name: The Sigstore Authors
 
 dependencies:
-  - name: ctlog
-    version: 0.2.56
-    repository: https://sigstore.github.io/helm-charts
-    condition: ctlog.enabled
+- name: ctlog
+  version: 0.2.56
+  repository: https://sigstore.github.io/helm-charts
+  condition: ctlog.enabled
 
 annotations:
   artifacthub.io/license: Apache-2.0

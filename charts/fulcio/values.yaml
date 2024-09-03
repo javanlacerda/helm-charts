@@ -1,13 +1,10 @@
 namespace:
   create: false
   name: fulcio-system
-
 imagePullSecrets: []
-
 config:
   contents: {}
   format: json
-
 server:
   replicaCount: 1
   name: server
@@ -62,8 +59,8 @@ server:
       className: "nginx"
       annotations: {}
       hosts:
-      - path: /
-        host: "fulcio.localhost"
+        - path: /
+          host: "fulcio.localhost"
       tls: []
     grpc:
       enabled: false
@@ -89,11 +86,11 @@ server:
       annotations: {}
       tls: []
       staticGlobalIP: lb-ext-ip
-      frontendConfigSpec:   # https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-configuration#configuring_ingress_features_through_frontendconfig_parameters
+      frontendConfigSpec: # https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-configuration#configuring_ingress_features_through_frontendconfig_parameters
         sslPolicy: fulcio-ssl-policy
         redirectToHttps:
           enabled: true
-      backendConfigSpec:   # https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-configuration#configuring_ingress_features_through_backendconfig_parameters
+      backendConfigSpec: # https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-configuration#configuring_ingress_features_through_backendconfig_parameters
         securityPolicy:
           name: fulcio-security-policy
         logging:
@@ -108,7 +105,6 @@ server:
   tolerations: []
   nodeSelector: {}
   affinity: {}
-
 createcerts:
   enabled: true
   replicaCount: 1
@@ -132,7 +128,6 @@ createcerts:
   tolerations: []
   nodeSelector: {}
   affinity: {}
-
 # Configure ctlog dependency
 ctlog:
   enabled: true
@@ -150,6 +145,7 @@ ctlog:
     fullnameOverride: ctlog-createcerts
   createctconfig:
     logPrefix: fulcio
-
 # Force namespace of namespaced resources
 forceNamespace: ""
+image:
+  tag: ""
