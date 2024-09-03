@@ -1,0 +1,40 @@
+name: Nightly Release
+
+# on:
+#   schedule:
+#     - cron: "0 1 * * *"  # Runs at 1 AM every day
+
+on:
+  workflow_dispatch:
+
+concurrency: nightly-release
+
+jobs:
+  nightly-update:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+      
+      - name: Setup crane
+        uses: imjasonh/setup-crane@v0.1
+      
+      - name: Update fulcio tag
+        run: |
+          FULCIO_NIGHTLY_IMAGE_TAG="$(crane digest gcr.io/projectsigstore/fulcio:v1.6.1)"
+          echo $FULCIO_NIGHTLY_IMAGE_TAG
+          sed -i "/repository: projectsigstore\/fulcio/,/version:/{s/version: .*/version: ${FULCIO_NIGHTLY_IMAGE_TAG}/}" charts/fulcio/values.yaml
+      - name: Commit report
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -am "Update fulcio tag"
+          git push
